@@ -2,6 +2,6 @@
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <h2>OpenShift</h2>
-    <p>Welcome to OpenShift! The current time is <%:DateTime.Now.ToString()%></p>
+    <p>Welcome to OpenShift!</p>
    
 </asp:Content>
