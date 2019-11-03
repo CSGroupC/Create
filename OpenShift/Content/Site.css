@@ -1,7 +1,5 @@
 ﻿/* Move down content because we have a fixed navbar that is 50px tall */
 body {
-    padding-top: 50px;
-    padding-bottom: 20px;
     font-family: 'Mukta', sans-serif;
 }
 
@@ -37,6 +35,7 @@ a, a:hover, a:focus {
     .jumbotron {
         margin-top: 20px;
     }
+
     .body-content {
         padding: 0;
     }

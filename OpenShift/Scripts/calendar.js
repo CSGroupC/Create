@@ -20,15 +20,16 @@ function getDateFromQueryString() {
 
 export class Calendar {
 
-    constructor(id) {
-
-        this.element = document.getElementById(id);
+    constructor() {
+        
+        this.element = document.createElement( "div" );
         this.date = getDateFromQueryString( );
         this.dayElements = null;
         this.dayList = null;
         
         const currentDate = new Date();
 
+        this.element.classList.add("calendar");
         this.element.innerHTML += `
         <div class="calendar-header">
             <a href="?m=${this.date.getMonth()}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-previous"><i class="fas fa-chevron-left"></i></a>
@@ -82,6 +83,7 @@ export class Calendar {
         if (this.date.getMonth() == currentDate.getMonth() && this.date.getFullYear() == currentDate.getFullYear()) {
             let todayElement = this.dayListElement.querySelector(".month-day:nth-child(" + today + ") .day-number");
             todayElement.classList.add("bg-primary");
+            todayElement.classList.add("text-light");
         }
     }
 
@@ -96,14 +98,35 @@ export class Calendar {
 
         this.dayListElement.innerHTML += html;
     }
+
+    appendTo(parent) {
+        parent.appendChild(this.element);
+    }
 }
 
 export class AvailabilityCalendar extends Calendar {
-    constructor(id) {
-        super(id);
+    constructor() {
+        super();
 
-        this.element.innerHTML += `
-        <h2>Availability Period</h2>
-        `;
+        /*
+        this.element.innerHTML = `
+        <h1>Availability</h1>
+        ` + this.element.innerHTML;
+        */
+
+        let monthDayElements = this.element.getElementsByClassName("month-day");
+
+        for (let element of monthDayElements) {
+            element.onclick = () => {
+                let dayNumberElement = element.getElementsByClassName("day-number")[0];
+
+                // <i class="fas fa-times"></i>
+                element.innerHTML += `
+                <div class="time-period bg-success text-light">
+                   <i class="fas fa-grip-lines-vertical" onclick="startDrag"></i>  9am-5pm <i class="fas fa-grip-lines-vertical" onclick="startDrag"></i>
+                </div>
+                `;
+            }
+        }
     }
 }

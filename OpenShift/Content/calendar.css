@@ -1,6 +1,10 @@
-﻿.calendar * {
-    box-sizing: border-box;
+﻿.calendar {
+    user-select: none;
 }
+
+    .calendar * {
+        box-sizing: border-box;
+    }
 
 .calendar-header {
     display: flex;
@@ -36,15 +40,19 @@
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
-    .calendar .month-day-list div,
-    .calendar .weekday-headers div {
+    .calendar .month-day-list > div,
+    .calendar .weekday-headers > div {
         display: flex;
         justify-content: center;
-        align-items: flex-start;
+        align-items: center;
         width: auto;
-        height: 100px;
+        min-height: 100px;
     }
 
+
+.calendar .month-day {
+    flex-direction: column;
+}
 
 .calendar .day-list .weekday-headers div {
     display: block;
@@ -62,9 +70,9 @@
     background-color: rgb(228, 228, 228);
 }
 
-.calendar .month-day-filler .day-number {
-    display: none;
-}
+    .calendar .month-day-filler .day-number {
+        display: none;
+    }
 
 .calendar .month-day-list > div {
     border-right: 1px solid rgb(204, 204, 204);
@@ -77,7 +85,25 @@
     justify-content: center;
     align-items: center;
     border-radius: 50% 50%;
+    /* NOTE: To align this item at the top of its flex parent */
+    margin-bottom: auto;
     width: 20px;
     height: 20px;
     cursor: pointer;
 }
+
+.calendar .time-period {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 1px;
+}
+
+
+    .calendar .time-period i {
+        cursor: ew-resize;
+        padding-left: 3px;
+        padding-right: 3px;
+    }
