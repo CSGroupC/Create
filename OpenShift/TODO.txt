@@ -1,3 +1,4 @@
 ﻿
 TODO:
+-Implement a 12-hour mode in the calendar
 -Allow changing months on the calendar without reloading the page
