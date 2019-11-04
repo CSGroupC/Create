@@ -54,6 +54,7 @@
     flex-direction: column;
 }
 
+
 .calendar .day-list .weekday-headers div {
     display: block;
     text-align: center;
@@ -85,11 +86,25 @@
     justify-content: center;
     align-items: center;
     border-radius: 50% 50%;
-    /* NOTE: To align this item at the top of its flex parent */
-    margin-bottom: auto;
     width: 20px;
     height: 20px;
     cursor: pointer;
+}
+
+.calendar .day-number-wrapper {
+    /* NOTE: To align this item at the top of its flex parent */
+    margin-bottom: auto;
+}
+
+
+.calendar .time-period-wrapper {
+    /* NOTE: This compensates for a bug in Chrome that puts mystery space after the time period */
+    justify-content: center;
+    display: grid;
+    /* NOTE: Default to 5 minutes per column */
+    grid-template-columns: repeat( 288, 1fr );
+    width: 100%;
+    margin: 1px;
 }
 
 .calendar .time-period {
@@ -97,13 +112,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
-    margin: 1px;
+    overflow: hidden;
 }
-
 
     .calendar .time-period i {
         cursor: ew-resize;
-        padding-left: 3px;
-        padding-right: 3px;
     }
+
+.calendar .time-period-time {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.calendar .left-handle {
+    padding-left: 3px;
+}
+
+.calendar .right-handle {
+    padding-right: 3px;
+}

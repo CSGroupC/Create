@@ -1,10 +1,12 @@
-﻿
+﻿import { CustomElement } from "./utilities.js";
+
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
 ];
 
+
 function getDateFromQueryString() {
-    const requestData = new URLSearchParams(location.search);
+    let requestData = new URLSearchParams(location.search);
     let date = null;
 
     if (requestData.has("m") && requestData.has("d") && requestData.has("y")) {
@@ -18,16 +20,87 @@ function getDateFromQueryString() {
     return date;
 }
 
+// NOTE: This class assumes the events passed in are mouse events targeting the handle elments inside a time period
+class TimePeriodResizal {
+    constructor(calendar, event = null) {
+        this.calendar = calendar;
+        if (event != null) {
+            this.start(event);
+        }
+    }
+
+    start(event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        this.element = event.currentTarget.parentElement;
+        this.startX = event.clientX;
+        if (event.currentTarget.classList.contains("left-handle")) {
+            this.side = "Start";
+        } else {
+            this.side = "End";
+        }
+
+        this.startColumn = parseInt(this.element.style["gridColumn" + this.side]);
+    }
+
+    stop(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        this.element = null;
+    }
+
+    resize(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        let parentWidth = this.element.parentElement.clientWidth;
+        let offset = event.clientX - this.startX;
+        let start = parseInt(this.element.style["gridColumn" + this.side]);
+        let rightColumn = parseInt(this.element.style.gridColumnEnd);
+        let leftColumn = parseInt(this.element.style.gridColumnStart);
+
+        let newStart = this.startColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
+        let margin = 0.14 * this.calendar.columnsPerDay;
+
+        if (this.side == "Start") {
+            if (newStart < 1) newStart = 1;
+            else if (newStart >= rightColumn - margin) newStart = rightColumn - margin;
+        } else {
+            if (newStart <= leftColumn + margin) newStart = leftColumn + margin;
+            else if (newStart > this.calendar.columnsPerDay + 1) newStart = this.calendar.columnsPerDay + 1;
+        }
+
+        let timeElement = this.element.getElementsByClassName("time-" + this.side.toLowerCase())[0];
+        timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
+
+        this.element.style["gridColumn" + this.side] = newStart;
+    }
+}
+
 export class Calendar {
 
     constructor() {
-        
-        this.element = document.createElement( "div" );
-        this.date = getDateFromQueryString( );
+
+        this.twentyFourHourMode = true;
+        this.minutesPerColumn = 30;
+
+        this.dayStartTime = new Date();
+        this.dayStartTime.setHours(0, 0, 0, 0);
+        this.dayEndTime = new Date();
+        this.dayEndTime.setHours(23, 59, 59, 999);
+
+        // See getter below
+        // this.columnsPerDay
+
+        this.element = document.createElement("div");
+        this.date = getDateFromQueryString();
         this.dayElements = null;
         this.dayList = null;
-        
+
         const currentDate = new Date();
+
+        this.timePeriodResizal = null;
 
         this.element.classList.add("calendar");
         this.element.innerHTML += `
@@ -38,7 +111,7 @@ export class Calendar {
             <a href="?m=${currentDate.getMonth() + 1}&d=${currentDate.getDate()}&y=${currentDate.getFullYear()}" class="btn btn-primary">Today</a>
         </div>
         `;
-        
+
         this.element.innerHTML += `
         <div class="day-list">
             <div class="weekday-headers">
@@ -61,7 +134,7 @@ export class Calendar {
         let dateBuffer = new Date(this.date);
         dateBuffer.setDate(1);
         let daysBeforeMonth = dateBuffer.getDay();
-        
+
         // Count days of this month
         dateBuffer = new Date(this.date);
         dateBuffer.setMonth(dateBuffer.getMonth() + 1);
@@ -79,7 +152,7 @@ export class Calendar {
         this.addMonthDays(daysAfterMonth, "month-day-filler");
 
         let today = daysBeforeMonth + currentDate.getDate();
-      
+
         if (this.date.getMonth() == currentDate.getMonth() && this.date.getFullYear() == currentDate.getFullYear()) {
             let todayElement = this.dayListElement.querySelector(".month-day:nth-child(" + today + ") .day-number");
             todayElement.classList.add("bg-primary");
@@ -87,12 +160,38 @@ export class Calendar {
         }
     }
 
+    get dayStartColumn() {
+        return (this.dayStartTime.getHours() * 60 + this.dayStartTime.getMinutes()) / this.minutesPerColumn;
+    }
+
+    get dayEndColumn() {
+        return (this.dayEndTime.getHours() * 60 + this.dayEndTime.getMinutes()) / this.minutesPerColumn;
+    }
+
+    get columnsPerDay() {
+        let startMinutes = this.dayStartTime.getHours() * 60 + this.dayStartTime.getMinutes();
+        let endMinutes = this.dayEndTime.getHours() * 60 + this.dayEndTime.getMinutes();
+        return parseInt((endMinutes - startMinutes) / this.minutesPerColumn) + 1;
+    }
+
+    columnToTime(column) {
+        let timeStart = new Date(this.dayStartTime.getTime());
+        timeStart.setMinutes(timeStart.getMinutes() + (column * this.minutesPerColumn));
+        let time = timeStart.getHours() + ":" + timeStart.getMinutes().toString().padStart(2, "0");
+        if (time == "0:00" && column > 1) {
+            time = "24:00";
+        }
+        return time;
+    }
+
     addMonthDays(count, classes) {
         let html = "";
-        
+
         for (let i = 1; i <= count; i++) {
             html += `
-            <div class="${classes}"><span class="day-number">${i}</span></div>
+            <div class="${classes}">
+                <div class="day-number-wrapper"><span class="day-number">${i}</span></div>
+            </div>
             `;
         }
 
@@ -108,25 +207,71 @@ export class AvailabilityCalendar extends Calendar {
     constructor() {
         super();
 
-        /*
-        this.element.innerHTML = `
-        <h1>Availability</h1>
-        ` + this.element.innerHTML;
-        */
-
         let monthDayElements = this.element.getElementsByClassName("month-day");
-
         for (let element of monthDayElements) {
-            element.onclick = () => {
-                let dayNumberElement = element.getElementsByClassName("day-number")[0];
 
-                // <i class="fas fa-times"></i>
-                element.innerHTML += `
-                <div class="time-period bg-success text-light">
-                   <i class="fas fa-grip-lines-vertical" onclick="startDrag"></i>  9am-5pm <i class="fas fa-grip-lines-vertical" onclick="startDrag"></i>
-                </div>
-                `;
+            element.onclick = (event) => {
+
+                if (this.timePeriodResizal == null) {
+
+                    let dayNumberElement = element.getElementsByClassName("day-number")[0];
+
+                    // NOTE: Must use inline CSS for the grid-column property in order for resizing to work
+                    // NOTE: Must use appendChild instead of innerHTML in order for the time periods to retain their click handlers 
+                    element.appendChild(new CustomElement(`
+                    <div class="time-period-wrapper" style="grid-template-columns: repeat( ${this.columnsPerDay}, 1fr );">
+                        <div class="time-period bg-success text-light" style="grid-column: 1 / ${this.columnsPerDay + 1};">
+                            <i class="fas fa-grip-lines-vertical left-handle"></i>
+                            <span class="time-period-time">
+                                <span class="time-start">0:00</span> - <span class="time-end">24:00</span>
+                            </span>
+                            <i class="fas fa-grip-lines-vertical right-handle"></i>
+                        </div>
+                    </div>
+                    ` ));
+
+                    let timePeriodWrapper = element.querySelector(".time-period-wrapper:last-child");
+                    let left = element.querySelector(".time-period-wrapper:last-child .left-handle");
+                    let right = element.querySelector(".time-period-wrapper:last-child .right-handle");
+
+                    timePeriodWrapper.onclick = (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (this.timePeriodResizal != null) {
+                            this.timePeriodResizal.stop(event);
+                            this.timePeriodResizal = null;
+                        }
+                    };
+                    left.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
+                    right.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
+                }
             }
         }
+
+
+        this.element.onclick = (event) => {
+
+            if (this.timePeriodResizal != null) {
+                this.timePeriodResizal.stop(event);
+                this.timePeriodResizal = null;
+            }
+        };
+
+        this.element.onmousemove = (event) => {
+
+            if (this.timePeriodResizal != null) {
+                this.timePeriodResizal.resize(event);
+            }
+        };
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Static properties
+// ---------------------------------------------------------------------------------------------------------
+
+
+// ---------------------------------------------------------------------------------------------------------
+// Globals
+// ---------------------------------------------------------------------------------------------------------
