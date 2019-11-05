@@ -64,7 +64,7 @@
                     <asp:LoginView runat="server" ViewStateMode="Disabled">
                         <AnonymousTemplate>
                             <ul class="nav navbar-nav navbar-right">
-                                <li class="nav-item"><a runat="server" class="nav-link" href="~/Account/Register">Register</a></li>
+                                <li class="nav-item"><a runat="server" class="nav-link" href="~/Account/NewUser">Register</a></li>
                                 <li class="nav-item"><a runat="server" class="nav-link" href="~/Account/Login">Log in</a></li>
                             </ul>
                         </AnonymousTemplate>
