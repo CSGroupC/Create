@@ -20,6 +20,18 @@ function getDateFromQueryString() {
     return date;
 }
 
+// Returns format HH:MM
+function formatTime(time) {
+    let coefficient = 1000 * 60 * 1;
+    let timeBuffer = new Date(Math.ceil(time.getTime() / coefficient) * coefficient);
+    let hours = timeBuffer.getHours();
+
+    if (time.getHours() == 23 && hours == 0)
+        hours = 24;
+
+    return hours + ":" + timeBuffer.getMinutes().toString().padStart(2, "0");
+}
+
 // NOTE: This class assumes the events passed in are mouse events targeting the handle elments inside a time period
 class TimePeriodResizal {
     constructor(calendar, event = null) {
@@ -80,18 +92,21 @@ class TimePeriodResizal {
 
 export class Calendar {
 
-    constructor() {
+    // Strings in format "HH:MM"
+    constructor(dayStartTime, dayEndTime, minutesPerColumn) {
 
         this.twentyFourHourMode = true;
-        this.minutesPerColumn = 30;
+        this.minutesPerColumn = minutesPerColumn;
 
         this.dayStartTime = new Date();
-        this.dayStartTime.setHours(0, 0, 0, 0);
         this.dayEndTime = new Date();
-        this.dayEndTime.setHours(23, 59, 59, 999);
+        this.setDayStartTime(dayStartTime);
+        this.setDayEndTime(dayEndTime);
 
-        // See getter below
+        // See getters below
         // this.columnsPerDay
+        // this.dayStartColumn
+        // this.dayEndColumn
 
         this.element = document.createElement("div");
         this.date = getDateFromQueryString();
@@ -177,11 +192,29 @@ export class Calendar {
     columnToTime(column) {
         let timeStart = new Date(this.dayStartTime.getTime());
         timeStart.setMinutes(timeStart.getMinutes() + (column * this.minutesPerColumn));
-        let time = timeStart.getHours() + ":" + timeStart.getMinutes().toString().padStart(2, "0");
+        let time = formatTime(timeStart);
         if (time == "0:00" && column > 1) {
             time = "24:00";
         }
         return time;
+    }
+
+    // Expected format: HH:MM
+    setDayStartTime(time) {
+        let hours = time.split(":")[0];
+        let minutes = time.split(":")[1];
+        this.dayStartTime.setHours(hours, minutes, 0, 0);
+    }
+
+    // Expected format: HH:MM
+    setDayEndTime(time) {
+        let hours = time.split(":")[0];
+        let minutes = time.split(":")[1];
+
+        if (hours == 24)
+            this.dayEndTime.setHours(23, 59, 59, 999);
+        else
+            this.dayEndTime.setHours(hours, minutes, 0, 0);
     }
 
     addMonthDays(count, classes) {
@@ -204,8 +237,8 @@ export class Calendar {
 }
 
 export class AvailabilityCalendar extends Calendar {
-    constructor() {
-        super();
+    constructor(dayStartTime = "9:00", dayEndTime = "17:00", minutesPerColumn = 15) {
+        super(dayStartTime, dayEndTime, minutesPerColumn);
 
         let monthDayElements = this.element.getElementsByClassName("month-day");
         for (let element of monthDayElements) {
@@ -223,7 +256,7 @@ export class AvailabilityCalendar extends Calendar {
                         <div class="time-period bg-success text-light" style="grid-column: 1 / ${this.columnsPerDay + 1};">
                             <i class="fas fa-grip-lines-vertical left-handle"></i>
                             <span class="time-period-time">
-                                <span class="time-start">0:00</span> - <span class="time-end">24:00</span>
+                                <span class="time-start">${formatTime(this.dayStartTime)}</span> - <span class="time-end">${formatTime(this.dayEndTime)}</span>
                             </span>
                             <i class="fas fa-grip-lines-vertical right-handle"></i>
                         </div>
