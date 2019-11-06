@@ -184,9 +184,9 @@ export class Calendar {
     }
 
     get columnsPerDay() {
-        let startMinutes = this.dayStartTime.getHours() * 60 + this.dayStartTime.getMinutes();
-        let endMinutes = this.dayEndTime.getHours() * 60 + this.dayEndTime.getMinutes();
-        return parseInt((endMinutes - startMinutes) / this.minutesPerColumn) + 1;
+        let startMinutes = this.dayStartTime.getHours() * 60 + Math.round(this.dayStartTime.getMinutes() / 60) * 60;
+        let endMinutes = this.dayEndTime.getHours() * 60 + Math.round(this.dayEndTime.getMinutes() / 60) * 60;
+        return (endMinutes - startMinutes) / this.minutesPerColumn;
     }
 
     columnToTime(column) {
