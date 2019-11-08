@@ -14,11 +14,14 @@
 
         const PLACEHOLDER = 0;
 
-        // TODO: Fill in data from back-end
+        // DATA (BACK->FRONT):
+        // 1. The start of the current user's business' working hours
         let workingHoursStart = PLACEHOLDER;
+        // 2. The end of the current user's business' working hours
+        let workingHoursEnd = PLACEHOLDER;
 
         let container = document.getElementById( "availability-calendar" );
-        let calendar = new AvailabilityCalendar( "9:00", "17:00", 15 );
+        let calendar = new AvailabilityCalendar( "15:00", "24:00", 15 );
         calendar.appendTo( container );
     </script>
 </asp:Content>

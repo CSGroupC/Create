@@ -1,5 +1,26 @@
-﻿
+﻿Instructions...
+
+Back-end devs:
+BACK->FRONT DATA: Replace the placeholders in the given files with the appropriate data
+FRONT->BACK DATA: Provide (in this file) an endpoint and the data it requires
+
 TODO:
+
+BACK->FRONT DATA:
+
+Availability.aspx:
+
+1. The start of the current user's business' working hours
+2. The end of the current user's business' working hours
+
+FRONT->BACK DATA:
+
+1. (CREATE) new availability time period for the current user
+2. (UPDATE) availability time period
+
+
+FEATURES:
+
 -Implement a 12-hour mode in the calendar
 -Allow changing months on the calendar without reloading the page
 -Allow for business hours after midnight
