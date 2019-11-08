@@ -46,7 +46,7 @@
         justify-content: center;
         align-items: center;
         width: auto;
-        min-height: 100px;
+        min-height: 110px;
     }
 
 
@@ -78,7 +78,7 @@
 .calendar .month-day-list > div {
     border-right: 1px solid rgb(204, 204, 204);
     border-bottom: 1px solid rgb(204, 204, 204);
-    padding: 5px;
+    padding: 5px 0px;
 }
 
 .calendar .day-number {
@@ -107,6 +107,19 @@
     margin: 1px;
 }
 
+.calendar .time-period-heading {
+    grid-column: 1 / -1;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    padding: 0px 3px;
+}
+
+.calendar .time-period-copy,
+.calendar .time-period-delete {
+    cursor: pointer;
+}
+
 .calendar .time-period {
     cursor: pointer;
     display: flex;
@@ -125,9 +138,11 @@
 }
 
 .calendar .left-handle {
-    padding-left: 3px;
+    padding: 3px;
+    padding-right: 0px;
 }
 
 .calendar .right-handle {
-    padding-right: 3px;
+    padding: 3px;
+    padding-left: 0px;
 }

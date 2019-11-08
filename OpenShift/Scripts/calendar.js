@@ -73,7 +73,9 @@ class TimePeriodResizal {
         let leftColumn = parseInt(this.element.style.gridColumnStart);
 
         let newStart = this.startColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
-        let margin = 0.14 * this.calendar.columnsPerDay;
+
+        // The margin between the start and end times
+        let margin = parseInt(0.12 * this.calendar.columnsPerDay);
 
         if (this.side == "Start") {
             if (newStart < 1) newStart = 1;
@@ -83,7 +85,8 @@ class TimePeriodResizal {
             else if (newStart > this.calendar.columnsPerDay + 1) newStart = this.calendar.columnsPerDay + 1;
         }
 
-        let timeElement = this.element.getElementsByClassName("time-" + this.side.toLowerCase())[0];
+        let timeElement = this.element.parentElement.getElementsByClassName("time-" + this.side.toLowerCase())[0];
+        console.log(newStart);
         timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
 
         this.element.style["gridColumn" + this.side] = newStart;
@@ -251,21 +254,37 @@ export class AvailabilityCalendar extends Calendar {
 
                     // NOTE: Must use inline CSS for the grid-column property in order for resizing to work
                     // NOTE: Must use appendChild instead of innerHTML in order for the time periods to retain their click handlers 
-                    element.appendChild(new CustomElement(`
+                    let timePeriodWrapper = new CustomElement(`
                     <div class="time-period-wrapper" style="grid-template-columns: repeat( ${this.columnsPerDay}, 1fr );">
-                        <div class="time-period bg-success text-light" style="grid-column: 1 / ${this.columnsPerDay + 1};">
-                            <i class="fas fa-grip-lines-vertical left-handle"></i>
+                        <div class="time-period-heading">
+
+                            <span class="time-period-copy">
+                                <i class="far fa-clone"></i>
+                            </span>
+
                             <span class="time-period-time">
                                 <span class="time-start">${formatTime(this.dayStartTime)}</span> - <span class="time-end">${formatTime(this.dayEndTime)}</span>
                             </span>
+
+                            <span class="time-period-delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+
+                        </div>
+                        <div class="time-period bg-success text-light" style="grid-column: 1 / ${this.columnsPerDay + 1};">
+                            <i class="fas fa-grip-lines-vertical left-handle"></i>
                             <i class="fas fa-grip-lines-vertical right-handle"></i>
                         </div>
                     </div>
-                    ` ));
+                    ` );
 
-                    let timePeriodWrapper = element.querySelector(".time-period-wrapper:last-child");
+                    element.appendChild(timePeriodWrapper);
+
                     let left = element.querySelector(".time-period-wrapper:last-child .left-handle");
                     let right = element.querySelector(".time-period-wrapper:last-child .right-handle");
+                    let timePeriod = timePeriodWrapper.getElementsByClassName("time-period")[0];
+                    let copyButton = timePeriodWrapper.getElementsByClassName("time-period-copy")[0];
+                    let deleteButton = timePeriodWrapper.getElementsByClassName("time-period-delete")[0];
 
                     timePeriodWrapper.onclick = (event) => {
                         event.preventDefault();
@@ -276,20 +295,27 @@ export class AvailabilityCalendar extends Calendar {
                             this.timePeriodResizal = null;
                         }
                     };
+
                     left.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
                     right.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
+
+                    deleteButton.onclick = (event) => {
+                        console.log("deleting")
+                        console.log(element.removeChild(timePeriodWrapper));
+                    };
                 }
             }
         }
 
-
-        this.element.onclick = (event) => {
+        // Add this to the body in case the user's mouse leaves the calendar
+        document.body.addEventListener("click", (event) => {
 
             if (this.timePeriodResizal != null) {
                 this.timePeriodResizal.stop(event);
                 this.timePeriodResizal = null;
             }
-        };
+
+        });
 
         this.element.onmousemove = (event) => {
 

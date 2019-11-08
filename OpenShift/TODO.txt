@@ -16,13 +16,5 @@ Availability.aspx:
 FRONT->BACK DATA:
 
 1. (CREATE) new availability time period for the current user
-2. (UPDATE) availability time period
-
-
-FEATURES:
-
--Implement a 12-hour mode in the calendar
--Allow changing months on the calendar without reloading the page
--Allow for business hours after midnight
-	NOTE: Right now, daily business hours must be one continuous time period that can't span past midnight.
-	      The only workaround now would be to start the business hours of the next day at midnight
+2. (UPDATE) availability time period for the current user
+3. (DELETE) availability time period for the current user
