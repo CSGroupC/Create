@@ -96,6 +96,9 @@
     margin-bottom: auto;
 }
 
+.calendar .time-period-section {
+    width: 100%;
+}
 
 .calendar .time-period-wrapper {
     /* NOTE: This compensates for a bug in Chrome that puts mystery space after the time period */
@@ -109,6 +112,7 @@
 
 .calendar .time-period-heading {
     grid-column: 1 / -1;
+    grid-row: 1;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
@@ -121,6 +125,7 @@
 }
 
 .calendar .time-period {
+    grid-row: 2;
     cursor: pointer;
     display: flex;
     justify-content: space-between;

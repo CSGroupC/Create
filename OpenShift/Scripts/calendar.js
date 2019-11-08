@@ -20,6 +20,11 @@ function getDateFromQueryString() {
     return date;
 }
 
+function preventDefault(event) {
+    event.preventDefault();
+    event.stopPropagation();
+}
+
 // Returns format HH:MM
 function formatTime(time) {
     let coefficient = 1000 * 60 * 1;
@@ -32,8 +37,8 @@ function formatTime(time) {
     return hours + ":" + timeBuffer.getMinutes().toString().padStart(2, "0");
 }
 
-// NOTE: This class assumes the events passed in are mouse events targeting the handle elments inside a time period
 class TimePeriodResizal {
+    // NOTE: This class assumes event is a mouse event targeting the handle elment inside a time period
     constructor(calendar, event = null) {
         this.calendar = calendar;
         if (event != null) {
@@ -42,8 +47,7 @@ class TimePeriodResizal {
     }
 
     start(event) {
-        event.stopPropagation();
-        event.preventDefault();
+        preventDefault(event);
 
         this.element = event.currentTarget.parentElement;
         this.startX = event.clientX;
@@ -57,17 +61,16 @@ class TimePeriodResizal {
     }
 
     stop(event) {
-        event.stopPropagation();
-        event.preventDefault();
+        preventDefault(event);
         this.element = null;
     }
 
     resize(event) {
-        event.preventDefault();
-        event.stopPropagation();
+        preventDefault(event);
 
         let parentWidth = this.element.parentElement.clientWidth;
         let offset = event.clientX - this.startX;
+        // parseInt to use addition rather than concatenation
         let start = parseInt(this.element.style["gridColumn" + this.side]);
         let rightColumn = parseInt(this.element.style.gridColumnEnd);
         let leftColumn = parseInt(this.element.style.gridColumnStart);
@@ -86,10 +89,69 @@ class TimePeriodResizal {
         }
 
         let timeElement = this.element.parentElement.getElementsByClassName("time-" + this.side.toLowerCase())[0];
-        console.log(newStart);
         timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
 
         this.element.style["gridColumn" + this.side] = newStart;
+    }
+}
+
+class TimePeriodMovement {
+    // NOTE: This class assumes the events are mouse events targeting a time period element
+
+    constructor(calendar, event = null) {
+        this.calendar = calendar;
+        if (event != null) {
+            this.start(event);
+        }
+    }
+
+    start(event) {
+        preventDefault(event);
+
+        this.element = event.currentTarget;
+        this.startX = event.clientX;
+
+        this.startColumn = parseInt(this.element.style.gridColumnStart);
+        this.endColumn = parseInt(this.element.style.gridColumnEnd);
+    }
+
+    stop(event) {
+        preventDefault(event);
+        this.element = null;
+    }
+
+    move(event) {
+        preventDefault(event);
+
+        let parentWidth = this.element.parentElement.clientWidth;
+        let offset = event.clientX - this.startX;
+        let start = this.element.style.gridColumnStart;
+        let end = this.element.style.gridColumnEnd;
+        let rightColumn = this.element.style.gridColumnEnd;
+        let leftColumn = this.element.style.gridColumnStart;
+
+        let newStart = this.startColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
+        let newEnd = this.endColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
+
+        let boundaryOffset = 0;
+        if (newStart < 1) {
+            boundaryOffset = newStart - 1;
+            newStart = 1;
+            newEnd -= boundaryOffset;
+        } else if (newEnd > this.calendar.columnsPerDay + 1) {
+            boundaryOffset = newEnd - this.calendar.columnsPerDay - 1;
+            newEnd = this.calendar.columnsPerDay + 1;
+            newStart -= boundaryOffset;
+        }
+
+        let timeElement = this.element.parentElement.getElementsByClassName("time-start")[0];
+        timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
+
+        timeElement = this.element.parentElement.getElementsByClassName("time-end")[0];
+        timeElement.innerHTML = this.calendar.columnToTime(newEnd - 1);
+
+        this.element.style.gridColumnStart = newStart;
+        this.element.style.gridColumnEnd = newEnd;
     }
 }
 
@@ -118,7 +180,9 @@ export class Calendar {
 
         const currentDate = new Date();
 
+        // Objects that represent an instance of resizing or movement
         this.timePeriodResizal = null;
+        this.timePeriodMovement = null;
 
         this.element.classList.add("calendar");
         this.element.innerHTML += `
@@ -227,6 +291,7 @@ export class Calendar {
             html += `
             <div class="${classes}">
                 <div class="day-number-wrapper"><span class="day-number">${i}</span></div>
+                <div class="time-period-section"></div>
             </div>
             `;
         }
@@ -248,7 +313,7 @@ export class AvailabilityCalendar extends Calendar {
 
             element.onclick = (event) => {
 
-                if (this.timePeriodResizal == null) {
+                if (this.timePeriodResizal == null && this.timePeriodMovement == null) {
 
                     let dayNumberElement = element.getElementsByClassName("day-number")[0];
 
@@ -278,30 +343,40 @@ export class AvailabilityCalendar extends Calendar {
                     </div>
                     ` );
 
-                    element.appendChild(timePeriodWrapper);
+                    element.querySelector(".time-period-section").prepend(timePeriodWrapper);
 
-                    let left = element.querySelector(".time-period-wrapper:last-child .left-handle");
-                    let right = element.querySelector(".time-period-wrapper:last-child .right-handle");
+                    let left = timePeriodWrapper.querySelector(".left-handle");
+                    let right = timePeriodWrapper.querySelector(".right-handle");
                     let timePeriod = timePeriodWrapper.getElementsByClassName("time-period")[0];
                     let copyButton = timePeriodWrapper.getElementsByClassName("time-period-copy")[0];
                     let deleteButton = timePeriodWrapper.getElementsByClassName("time-period-delete")[0];
 
                     timePeriodWrapper.onclick = (event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
+                        preventDefault(event);
 
                         if (this.timePeriodResizal != null) {
                             this.timePeriodResizal.stop(event);
                             this.timePeriodResizal = null;
                         }
+                        else if (this.timePeriodMovement != null) {
+                            this.timePeriodMovement.stop(event);
+                            this.timePeriodMovement = null;
+                        }
                     };
 
-                    left.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
-                    right.onmousedown = (event) => { this.timePeriodResizal = new TimePeriodResizal(this, event); };
+                    timePeriod.onmousedown = (event) => {
+                        this.timePeriodMovement = new TimePeriodMovement(this, event);
+                    };
+
+                    left.onmousedown = (event) => {
+                        this.timePeriodResizal = new TimePeriodResizal(this, event);
+                    };
+                    right.onmousedown = (event) => {
+                        this.timePeriodResizal = new TimePeriodResizal(this, event);
+                    };
 
                     deleteButton.onclick = (event) => {
-                        console.log("deleting")
-                        console.log(element.removeChild(timePeriodWrapper));
+                        element.removeChild(timePeriodWrapper);
                     };
                 }
             }
@@ -314,6 +389,10 @@ export class AvailabilityCalendar extends Calendar {
                 this.timePeriodResizal.stop(event);
                 this.timePeriodResizal = null;
             }
+            if (this.timePeriodMovement != null) {
+                this.timePeriodMovement.stop(event);
+                this.timePeriodMovement = null;
+            }
 
         });
 
@@ -321,6 +400,9 @@ export class AvailabilityCalendar extends Calendar {
 
             if (this.timePeriodResizal != null) {
                 this.timePeriodResizal.resize(event);
+            }
+            else if (this.timePeriodMovement != null) {
+                this.timePeriodMovement.move(event);
             }
         };
     }
