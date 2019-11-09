@@ -376,7 +376,7 @@ export class AvailabilityCalendar extends Calendar {
                     };
 
                     deleteButton.onclick = (event) => {
-                        element.removeChild(timePeriodWrapper);
+                        element.querySelector(".time-period-section").removeChild(timePeriodWrapper);
                     };
                 }
             }
