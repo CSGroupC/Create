@@ -1,159 +1,5 @@
-﻿import { CustomElement } from "./utilities.js";
-
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-];
-
-
-function getDateFromQueryString() {
-    let requestData = new URLSearchParams(location.search);
-    let date = null;
-
-    if (requestData.has("m") && requestData.has("d") && requestData.has("y")) {
-        date = new Date(requestData.get("y"), requestData.get("m") - 1, requestData.get("d"));
-    } else {
-        date = new Date();
-        window.history.replaceState(null, null, `?m=${date.getMonth() + 1}&d=${date.getDate()}&y=${date.getFullYear()}`);
-        requestData = new URLSearchParams(location.search);
-    }
-
-    return date;
-}
-
-function preventDefault(event) {
-    event.preventDefault();
-    event.stopPropagation();
-}
-
-// Returns format HH:MM
-function formatTime(time) {
-    let coefficient = 1000 * 60 * 1;
-    let timeBuffer = new Date(Math.ceil(time.getTime() / coefficient) * coefficient);
-    let hours = timeBuffer.getHours();
-
-    if (time.getHours() == 23 && hours == 0)
-        hours = 24;
-
-    return hours + ":" + timeBuffer.getMinutes().toString().padStart(2, "0");
-}
-
-class TimePeriodResizal {
-    // NOTE: This class assumes event is a mouse event targeting the handle elment inside a time period
-    constructor(calendar, event = null) {
-        this.calendar = calendar;
-        if (event != null) {
-            this.start(event);
-        }
-    }
-
-    start(event) {
-        preventDefault(event);
-
-        this.element = event.currentTarget.parentElement;
-        this.startX = event.clientX;
-        if (event.currentTarget.classList.contains("left-handle")) {
-            this.side = "Start";
-        } else {
-            this.side = "End";
-        }
-
-        this.startColumn = parseInt(this.element.style["gridColumn" + this.side]);
-    }
-
-    stop(event) {
-        preventDefault(event);
-        this.element = null;
-    }
-
-    resize(event) {
-        preventDefault(event);
-
-        let parentWidth = this.element.parentElement.clientWidth;
-        let offset = event.clientX - this.startX;
-        // parseInt to use addition rather than concatenation
-        let start = parseInt(this.element.style["gridColumn" + this.side]);
-        let rightColumn = parseInt(this.element.style.gridColumnEnd);
-        let leftColumn = parseInt(this.element.style.gridColumnStart);
-
-        let newStart = this.startColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
-
-        // The margin between the start and end times
-        let margin = parseInt(0.12 * this.calendar.columnsPerDay);
-
-        if (this.side == "Start") {
-            if (newStart < 1) newStart = 1;
-            else if (newStart >= rightColumn - margin) newStart = rightColumn - margin;
-        } else {
-            if (newStart <= leftColumn + margin) newStart = leftColumn + margin;
-            else if (newStart > this.calendar.columnsPerDay + 1) newStart = this.calendar.columnsPerDay + 1;
-        }
-
-        let timeElement = this.element.parentElement.getElementsByClassName("time-" + this.side.toLowerCase())[0];
-        timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
-
-        this.element.style["gridColumn" + this.side] = newStart;
-    }
-}
-
-class TimePeriodMovement {
-    // NOTE: This class assumes the events are mouse events targeting a time period element
-
-    constructor(calendar, event = null) {
-        this.calendar = calendar;
-        if (event != null) {
-            this.start(event);
-        }
-    }
-
-    start(event) {
-        preventDefault(event);
-
-        this.element = event.currentTarget;
-        this.startX = event.clientX;
-
-        this.startColumn = parseInt(this.element.style.gridColumnStart);
-        this.endColumn = parseInt(this.element.style.gridColumnEnd);
-    }
-
-    stop(event) {
-        preventDefault(event);
-        this.element = null;
-    }
-
-    move(event) {
-        preventDefault(event);
-
-        let parentWidth = this.element.parentElement.clientWidth;
-        let offset = event.clientX - this.startX;
-        let start = this.element.style.gridColumnStart;
-        let end = this.element.style.gridColumnEnd;
-        let rightColumn = this.element.style.gridColumnEnd;
-        let leftColumn = this.element.style.gridColumnStart;
-
-        let newStart = this.startColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
-        let newEnd = this.endColumn + parseInt((offset / parentWidth) * this.calendar.columnsPerDay);
-
-        let boundaryOffset = 0;
-        if (newStart < 1) {
-            boundaryOffset = newStart - 1;
-            newStart = 1;
-            newEnd -= boundaryOffset;
-        } else if (newEnd > this.calendar.columnsPerDay + 1) {
-            boundaryOffset = newEnd - this.calendar.columnsPerDay - 1;
-            newEnd = this.calendar.columnsPerDay + 1;
-            newStart -= boundaryOffset;
-        }
-
-        let timeElement = this.element.parentElement.getElementsByClassName("time-start")[0];
-        timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
-
-        timeElement = this.element.parentElement.getElementsByClassName("time-end")[0];
-        timeElement.innerHTML = this.calendar.columnToTime(newEnd - 1);
-
-        this.element.style.gridColumnStart = newStart;
-        this.element.style.gridColumnEnd = newEnd;
-    }
-}
+﻿import { CustomElement, TimePeriodWrapper } from "./dom-elements.js";
+import { MONTH_NAMES, formatTime, getDateFromQueryString, preventDefault } from "./utilities.js";
 
 export class Calendar {
 
@@ -178,6 +24,9 @@ export class Calendar {
         this.dayElements = null;
         this.dayList = null;
 
+        // NOTE: This is required to allow making new time period templates
+        this.timePeriodTemplate = null;
+
         const currentDate = new Date();
 
         // Objects that represent an instance of resizing or movement
@@ -189,7 +38,7 @@ export class Calendar {
         <div class="calendar-header">
             <a href="?m=${this.date.getMonth()}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-previous"><i class="fas fa-chevron-left"></i></a>
             <a href="?m=${this.date.getMonth() + 2}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-next"><i class="fas fa-chevron-right"></i></a>
-            <span class="month-title">${MONTH_NAMES[this.date.getMonth()]} ${this.date.getFullYear()}</span>
+            <span class="month-title h2">${MONTH_NAMES[this.date.getMonth()]} ${this.date.getFullYear()}</span>
             <a href="?m=${currentDate.getMonth() + 1}&d=${currentDate.getDate()}&y=${currentDate.getFullYear()}" class="btn btn-primary">Today</a>
         </div>
         `;
@@ -308,6 +157,18 @@ export class AvailabilityCalendar extends Calendar {
     constructor(dayStartTime = "9:00", dayEndTime = "17:00", minutesPerColumn = 15) {
         super(dayStartTime, dayEndTime, minutesPerColumn);
 
+
+        let card = new CustomElement(`<div class="card"><div class="card-header h2">New Availability Period</div><div class="card-body"></div></div>`);
+        let cardBody = card.getElementsByClassName("card-body")[0];
+
+        this.timePeriodTemplate = new TimePeriodWrapper(this);
+        this.timePeriodTemplate.classList.add("time-period-template");
+
+        // Insert right after the calendar header
+        cardBody.appendChild(this.timePeriodTemplate);
+        this.element.prepend(card);
+        //this.element.prepend(new CustomElement(`<div class="h1">Time Period</div>`));
+
         let monthDayElements = this.element.getElementsByClassName("month-day");
         for (let element of monthDayElements) {
 
@@ -317,67 +178,9 @@ export class AvailabilityCalendar extends Calendar {
 
                     let dayNumberElement = element.getElementsByClassName("day-number")[0];
 
-                    // NOTE: Must use inline CSS for the grid-column property in order for resizing to work
-                    // NOTE: Must use appendChild instead of innerHTML in order for the time periods to retain their click handlers 
-                    let timePeriodWrapper = new CustomElement(`
-                    <div class="time-period-wrapper" style="grid-template-columns: repeat( ${this.columnsPerDay}, 1fr );">
-                        <div class="time-period-heading">
-
-                            <span class="time-period-copy">
-                                <i class="far fa-clone"></i>
-                            </span>
-
-                            <span class="time-period-time">
-                                <span class="time-start">${formatTime(this.dayStartTime)}</span> - <span class="time-end">${formatTime(this.dayEndTime)}</span>
-                            </span>
-
-                            <span class="time-period-delete">
-                                <i class="fas fa-trash-alt"></i>
-                            </span>
-
-                        </div>
-                        <div class="time-period bg-success text-light" style="grid-column: 1 / ${this.columnsPerDay + 1};">
-                            <i class="fas fa-grip-lines-vertical left-handle"></i>
-                            <i class="fas fa-grip-lines-vertical right-handle"></i>
-                        </div>
-                    </div>
-                    ` );
+                    let timePeriodWrapper = new TimePeriodWrapper(this);
 
                     element.querySelector(".time-period-section").prepend(timePeriodWrapper);
-
-                    let left = timePeriodWrapper.querySelector(".left-handle");
-                    let right = timePeriodWrapper.querySelector(".right-handle");
-                    let timePeriod = timePeriodWrapper.getElementsByClassName("time-period")[0];
-                    let copyButton = timePeriodWrapper.getElementsByClassName("time-period-copy")[0];
-                    let deleteButton = timePeriodWrapper.getElementsByClassName("time-period-delete")[0];
-
-                    timePeriodWrapper.onclick = (event) => {
-                        preventDefault(event);
-
-                        if (this.timePeriodResizal != null) {
-                            this.timePeriodResizal.stop(event);
-                            this.timePeriodResizal = null;
-                        }
-                        else if (this.timePeriodMovement != null) {
-                            this.timePeriodMovement.stop(event);
-                            this.timePeriodMovement = null;
-                        }
-                    };
-
-                    timePeriod.onmousedown = (event) => {
-                        this.timePeriodMovement = new TimePeriodMovement(this, event);
-                    };
-
-                    left.onmousedown = (event) => {
-                        this.timePeriodResizal = new TimePeriodResizal(this, event);
-                    };
-                    right.onmousedown = (event) => {
-                        this.timePeriodResizal = new TimePeriodResizal(this, event);
-                    };
-
-                    deleteButton.onclick = (event) => {
-                        element.querySelector(".time-period-section").removeChild(timePeriodWrapper);
-                    };
                 }
             }
         }

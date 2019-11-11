@@ -29,9 +29,7 @@
     }
 
 .month-title {
-    font-size: 50px;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin: 20px;
 }
 
 .calendar .month-day-list,
@@ -56,7 +54,7 @@
 
 
 .calendar .day-list .weekday-headers div {
-    display: block;
+    display: flex;
     text-align: center;
     font-size: 50px;
 }
@@ -106,9 +104,25 @@
     display: grid;
     /* NOTE: Default to 5 minutes per column */
     grid-template-columns: repeat( 288, 1fr );
-    width: 100%;
     margin: 1px;
+    width: 100%;
 }
+
+.calendar .time-period-template .time-period-copy,
+.calendar .time-period-template .time-period-delete {
+    display: none;
+}
+
+.calendar .time-period-template .time-period-heading {
+    font-size: 30px;
+    justify-content: center;
+}
+
+.calendar .time-period-template i {
+    font-size: 30px;
+    padding: 8px;
+}
+
 
 .calendar .time-period-heading {
     grid-column: 1 / -1;
@@ -123,6 +137,7 @@
 .calendar .time-period-delete {
     cursor: pointer;
 }
+
 
 .calendar .time-period {
     grid-row: 2;
