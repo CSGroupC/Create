@@ -1,4 +1,4 @@
-﻿import { MONTH_NAMES, formatTime, getDateFromQueryString, preventDefault } from "./utilities.js";
+﻿import { MONTH_NAMES, formatTime, getDateFromQueryString, preventDefault, Event } from "./utilities.js";
 
 class TimePeriodResizal {
     // NOTE: This class assumes event is a mouse event targeting the handle elment inside a time period
@@ -11,10 +11,8 @@ class TimePeriodResizal {
     }
 
     start(event) {
-        preventDefault(event);
-
         this.startX = event.clientX;
-        if (event.currentTarget.classList.contains("left-handle")) {
+        if (event.target.classList.contains("left-handle")) {
             this.side = "Start";
         } else {
             this.side = "End";
@@ -24,12 +22,10 @@ class TimePeriodResizal {
     }
 
     stop(event) {
-        preventDefault(event);
         this.timePeriod = null;
     }
 
     resize(event) {
-        preventDefault(event);
 
         let parentWidth = this.timePeriod.parentElement.clientWidth;
         let offset = event.clientX - this.startX;
@@ -75,9 +71,8 @@ class TimePeriodMovement {
     }
 
     start(event) {
-        preventDefault(event);
 
-        this.element = event.currentTarget;
+        this.element = event.target;
         this.startX = event.clientX;
 
         this.startColumn = parseInt(this.element.style.gridColumnStart);
@@ -85,12 +80,10 @@ class TimePeriodMovement {
     }
 
     stop(event) {
-        preventDefault(event);
         this.element = null;
     }
 
     move(event) {
-        preventDefault(event);
 
         let parentWidth = this.element.parentElement.clientWidth;
         let offset = event.clientX - this.startX;
@@ -180,40 +173,44 @@ export function TimePeriodWrapper(calendar) {
     let copyButton = timePeriodWrapper.getElementsByClassName("time-period-copy")[0];
     let deleteButton = timePeriodWrapper.getElementsByClassName("time-period-delete")[0];
 
-    timePeriodWrapper.onclick = (event) => {
-        preventDefault(event);
-
-        if (calendar.timePeriodResizal != null) {
-            calendar.timePeriodResizal.stop(event);
-            calendar.timePeriodResizal = null;
-        }
-        else if (calendar.timePeriodMovement != null) {
-            calendar.timePeriodMovement.stop(event);
-            calendar.timePeriodMovement = null;
-        }
-    };
-
-    timePeriod.onmousedown = (event) => {
+    let handler = new Event.PointerHandler((event) => {
         calendar.timePeriodMovement = new TimePeriodMovement(calendar, timePeriod, event);
-    };
+    });
 
-    left.onmousedown = (event) => {
+    timePeriod.ontouchstart = handler;
+    timePeriod.onmousedown = handler;
+
+    // To prevent adding a new time period when clicking this time period
+    // NOTE: onclick will be simulated on mobile browsers
+    timePeriod.onclick = (event) => {
+        event.stopPropagation();
+    }
+
+    handler = new Event.PointerHandler((event) => {
         calendar.timePeriodResizal = new TimePeriodResizal(calendar, timePeriod, event);
-    };
+    });
 
-    right.onmousedown = (event) => {
-        calendar.timePeriodResizal = new TimePeriodResizal(calendar, timePeriod, event);
-    };
+    left.ontouchstart = handler;
+    left.onmousedown = handler;
 
-    copyButton.onclick = (event) => {
+    right.ontouchstart = handler;
+    right.onmousedown = handler;
+
+    handler = new Event.PointerHandler((event) => {
         let resizal = new TimePeriodResizal(calendar, calendar.timePeriodTemplate.getElementsByClassName("time-period")[0]);
         resizal.setColumn(timePeriod.style.gridColumnStart, "Start");
         resizal.setColumn(timePeriod.style.gridColumnEnd, "End");
-    };
+    });
 
-    deleteButton.onclick = (event) => {
+    // NOTE: onclick will be simulated on mobile browsers
+    copyButton.onclick = handler;
+
+    handler = new Event.PointerHandler((event) => {
         timePeriodWrapper.parentElement.removeChild(timePeriodWrapper);
-    };
+    });
+
+    // NOTE: onclick will be simulated on mobile browsers
+    deleteButton.onclick = handler;
 
     return timePeriodWrapper;
 }

@@ -9,6 +9,8 @@
 .calendar-header {
     display: flex;
     align-items: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .calendar-month-previous,
@@ -29,7 +31,7 @@
     }
 
 .month-title {
-    margin: 20px;
+    margin: 10px;
 }
 
 .calendar .month-day-list,
@@ -53,10 +55,14 @@
 }
 
 
+.calendar .day-list .weekday-headers > div {
+    min-height: 30px;
+}
+
 .calendar .day-list .weekday-headers div {
     display: flex;
-    text-align: center;
-    font-size: 50px;
+    font-size: 20px;
+    align-items: flex-end;
 }
 
 .calendar .month-day-list {
