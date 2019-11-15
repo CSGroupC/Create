@@ -1,10 +1,14 @@
 ﻿import { CustomElement, TimePeriodWrapper } from "./dom-elements.js";
-import { MONTH_NAMES, formatTime, getDateFromQueryString, preventDefault } from "./utilities.js";
+import { MONTH_NAMES, formatTime, getDateFromQueryString, preventDefault, Event } from "./utilities.js";
 
 export class Calendar {
 
     // Strings in format "HH:MM"
     constructor(dayStartTime, dayEndTime, minutesPerColumn) {
+
+        // Require mouseup and mousedown to target the same element in order for click events to fire
+        Event.preventFalseClicks();
+        //Event.registerTouchEvent();
 
         this.twentyFourHourMode = true;
         this.minutesPerColumn = minutesPerColumn;
@@ -38,7 +42,7 @@ export class Calendar {
         <div class="calendar-header">
             <a href="?m=${this.date.getMonth()}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-previous"><i class="fas fa-chevron-left"></i></a>
             <a href="?m=${this.date.getMonth() + 2}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-next"><i class="fas fa-chevron-right"></i></a>
-            <span class="month-title h2">${MONTH_NAMES[this.date.getMonth()]} ${this.date.getFullYear()}</span>
+            <span class="month-title h4">${MONTH_NAMES[this.date.getMonth()]} ${this.date.getFullYear()}</span>
             <a href="?m=${currentDate.getMonth() + 1}&d=${currentDate.getDate()}&y=${currentDate.getFullYear()}" class="btn btn-primary">Today</a>
         </div>
         `;
@@ -158,7 +162,7 @@ export class AvailabilityCalendar extends Calendar {
         super(dayStartTime, dayEndTime, minutesPerColumn);
 
 
-        let card = new CustomElement(`<div class="card"><div class="card-header h2">New Availability Period</div><div class="card-body"></div></div>`);
+        let card = new CustomElement(`<div class="card"><div class="card-header h3">New Availability Period</div><div class="card-body"></div></div>`);
         let cardBody = card.getElementsByClassName("card-body")[0];
 
         this.timePeriodTemplate = new TimePeriodWrapper(this);
@@ -172,8 +176,9 @@ export class AvailabilityCalendar extends Calendar {
         let monthDayElements = this.element.getElementsByClassName("month-day");
         for (let element of monthDayElements) {
 
-            element.onclick = (event) => {
+            let handler = new Event.PointerHandler((event) => {
 
+                // If the click originated directly on this element
                 if (this.timePeriodResizal == null && this.timePeriodMovement == null) {
 
                     let dayNumberElement = element.getElementsByClassName("day-number")[0];
@@ -182,11 +187,13 @@ export class AvailabilityCalendar extends Calendar {
 
                     element.querySelector(".time-period-section").prepend(timePeriodWrapper);
                 }
-            }
+            });
+
+            // NOTE: onclick will be simulated on mobile browsers
+            element.onclick = handler;
         }
 
-        // Add this to the body in case the user's mouse leaves the calendar
-        document.body.addEventListener("click", (event) => {
+        let handler = new Event.PointerHandler((event) => {
 
             if (this.timePeriodResizal != null) {
                 this.timePeriodResizal.stop(event);
@@ -196,18 +203,24 @@ export class AvailabilityCalendar extends Calendar {
                 this.timePeriodMovement.stop(event);
                 this.timePeriodMovement = null;
             }
+        }, true); // Allow default to allow the click event to fire on mobile
 
-        });
+        // Add this to the body in case the user's mouse leaves the calendar
+        document.body.addEventListener("touchend", handler);
+        document.body.addEventListener("mouseup", handler);
 
-        this.element.onmousemove = (event) => {
-
+        handler = new Event.PointerHandler((event) => {
             if (this.timePeriodResizal != null) {
                 this.timePeriodResizal.resize(event);
             }
             else if (this.timePeriodMovement != null) {
                 this.timePeriodMovement.move(event);
             }
-        };
+        });
+
+        this.element.ontouchmove = handler;
+        this.element.onmousemove = handler;
+
     }
 }
 

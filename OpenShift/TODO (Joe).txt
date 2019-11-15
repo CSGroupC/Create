@@ -1,5 +1,6 @@
 ﻿TODO:
 
+-Make it work on mobile
 -Allow the user to zoom in on the calendar to be more specific with time periods
 -Allow changing months on the calendar without reloading the page
 -Allow for business hours after midnight
