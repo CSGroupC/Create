@@ -6,6 +6,10 @@
         box-sizing: border-box;
     }
 
+    .calendar .calendar-mobile-overlay {
+        display: none;
+    }
+
 .calendar-header {
     display: flex;
     align-items: center;
@@ -30,8 +34,15 @@
         cursor: pointer;
     }
 
-.month-title {
+.calendar .month-title {
     margin: 10px;
+}
+
+.calendar .month-day-list {
+    grid-column-gap: 1px;
+    grid-row-gap: 1px;
+    background-color: rgb(204, 204, 204);
+    border: 1px solid rgb(204, 204, 204);
 }
 
 .calendar .month-day-list,
@@ -52,6 +63,7 @@
 
 .calendar .month-day {
     flex-direction: column;
+    background-color: #FFFFFF;
 }
 
 
@@ -66,8 +78,6 @@
 }
 
 .calendar .month-day-list {
-    border-top: 1px solid rgb(204, 204, 204);
-    border-left: 1px solid rgb(204, 204, 204);
     font-size: 12px;
 }
 
@@ -79,9 +89,7 @@
         display: none;
     }
 
-.calendar .month-day-list > div {
-    border-right: 1px solid rgb(204, 204, 204);
-    border-bottom: 1px solid rgb(204, 204, 204);
+.calendar .month-day {
     padding: 5px 0px;
 }
 
@@ -103,15 +111,18 @@
 .calendar .time-period-section {
     width: 100%;
 }
-
+/*
 .calendar .time-period-wrapper {
+    min-height: 30px;
+}
+*/
+
+.calendar .time-period-inner {
     /* NOTE: This compensates for a bug in Chrome that puts mystery space after the time period */
     justify-content: center;
     display: grid;
     /* NOTE: Default to 5 minutes per column */
     grid-template-columns: repeat( 288, 1fr );
-    margin: 1px;
-    width: 100%;
 }
 
 .calendar .time-period-template .time-period-copy,
@@ -171,4 +182,101 @@
 .calendar .right-handle {
     padding: 3px;
     padding-left: 0px;
+}
+
+@media only screen and (max-width: 768px) {
+
+    .calendar .calendar-mobile-overlay {
+        position: fixed;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
+        opacity: 0.2;
+        background-color: #000000;
+        z-index: 1;
+    }
+
+        .calendar .calendar-mobile-overlay:not(.hidden) {
+            display: initial;
+        }
+
+    .calendar .month-day {
+        padding: 0px;
+        padding-bottom: 10px;
+    }
+
+    .calendar .month-day-list .time-period {
+        margin-top: 5px;
+    }
+
+    .calendar .month-day-list .left-handle,
+    .calendar .month-day-list .right-handle {
+        display: none;
+    }
+
+    .calendar .month-day-list .time-period-wrapper .time-period {
+        min-height: 12px;
+    }
+
+    .calendar .month-day-list .time-period-wrapper .time-period-heading {
+        display: none;
+    }
+
+    .calendar .time-period-template .left-handle {
+        padding-right: 0px;
+    }
+
+    .calendar .time-period-template .right-handle {
+        padding-left: 0px;
+    }
+
+    /*
+    .calendar .month-day-list .time-period-wrapper.focused .time-period-heading {
+        position: absolute;
+        width: 100%;
+        left: 0px;
+        margin-top: -40px;
+        font-size: 30px;
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .time-period {
+        display: flex;
+        position: absolute;
+        left: 0px;
+    }
+    */
+
+    .calendar .month-day-list .time-period-wrapper .time-period-inner {
+        /* Used to animated the height of the element */
+        font-size: 8px;
+        transition: all 0.2s;
+        z-index: 100;
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .time-period-inner {
+        position: absolute;
+        left: 0px;
+        font-size: 30px;
+        margin-top: -60px;
+        margin-left: 15px;
+        margin-right: 15px;
+        width: calc(100% - 30px);
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .left-handle {
+        display: inline-block;
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .right-handle {
+        display: inline-block;
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .time-period-time {
+        display: initial;
+    }
+
+    .calendar .month-day-list .time-period-wrapper.focused .time-period-heading {
+        display: flex;
+    }
 }

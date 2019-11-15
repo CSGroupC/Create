@@ -15,10 +15,11 @@ export class Calendar {
 
         this.dayStartTime = new Date();
         this.dayEndTime = new Date();
+        this.hoursPerDay = 24;
         this.setDayStartTime(dayStartTime);
         this.setDayEndTime(dayEndTime);
 
-        // See getters below
+        // See getters/setters below
         // this.columnsPerDay
         // this.dayStartColumn
         // this.dayEndColumn
@@ -31,6 +32,9 @@ export class Calendar {
         // NOTE: This is required to allow making new time period templates
         this.timePeriodTemplate = null;
 
+        // Used for viewing time period details
+        this.focusedTimePeriod = null;
+
         const currentDate = new Date();
 
         // Objects that represent an instance of resizing or movement
@@ -39,6 +43,7 @@ export class Calendar {
 
         this.element.classList.add("calendar");
         this.element.innerHTML += `
+        <div class="calendar-mobile-overlay hidden"></div>
         <div class="calendar-header">
             <a href="?m=${this.date.getMonth()}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-previous"><i class="fas fa-chevron-left"></i></a>
             <a href="?m=${this.date.getMonth() + 2}&d=${this.date.getDate()}&y=${this.date.getFullYear()}" class="calendar-month-next"><i class="fas fa-chevron-right"></i></a>
@@ -64,6 +69,7 @@ export class Calendar {
         `;
 
         this.dayListElement = this.element.getElementsByClassName("month-day-list")[0];
+        this.mobileOverlay = this.element.getElementsByClassName("calendar-mobile-overlay")[0];
 
         // Count weekdays from the last Sunday before this month, to the 1st of this month
         let dateBuffer = new Date(this.date);
@@ -93,6 +99,14 @@ export class Calendar {
             todayElement.classList.add("bg-primary");
             todayElement.classList.add("text-light");
         }
+
+        let handler = new Event.PointerHandler((event) => {
+            this.mobileOverlay.classList.add("hidden");
+            this.focusedTimePeriod.classList.remove("focused");
+            this.focusedTimePeriod = null;
+        });
+
+        this.mobileOverlay.onclick = handler;
     }
 
     get dayStartColumn() {
@@ -119,11 +133,22 @@ export class Calendar {
         return time;
     }
 
+
+    pixelsToColumns(pixels, parentWidth) {
+        return parseInt((pixels / parentWidth) * this.columnsPerDay);
+    }
+
+    hoursToColumns(hours) {
+        return parseInt((hours / this.hoursPerDay) * this.columnsPerDay);
+    }
+
     // Expected format: HH:MM
     setDayStartTime(time) {
         let hours = time.split(":")[0];
         let minutes = time.split(":")[1];
         this.dayStartTime.setHours(hours, minutes, 0, 0);
+
+        this.hoursPerDay = (this.dayEndTime.getTime() - this.dayStartTime.getTime()) / 1000 / 60 / 60;
     }
 
     // Expected format: HH:MM
@@ -135,6 +160,8 @@ export class Calendar {
             this.dayEndTime.setHours(23, 59, 59, 999);
         else
             this.dayEndTime.setHours(hours, minutes, 0, 0);
+
+        this.hoursPerDay = (this.dayEndTime.getTime() - this.dayStartTime.getTime()) / 1000 / 60 / 60;
     }
 
     addMonthDays(count, classes) {
@@ -220,7 +247,6 @@ export class AvailabilityCalendar extends Calendar {
 
         this.element.ontouchmove = handler;
         this.element.onmousemove = handler;
-
     }
 }
 
