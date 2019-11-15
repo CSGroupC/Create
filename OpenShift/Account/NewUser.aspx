@@ -75,7 +75,10 @@
             <div class="form-group">
                 <asp:Label runat="server" AssociatedControlID="Location" CssClass="col-md-2 control-label">Store Location:</asp:Label>
                 <div class="col-md-10">
-                    <asp:TextBox runat="server" ID="Location" CssClass="form-control" />
+                    <asp:DropDownList ID="Location" runat="server" DataSourceID="SqlDataSource3" DataTextField="strStoreName" DataValueField="intStoreID">
+                    </asp:DropDownList>
+                    <asp:SqlDataSource ID="SqlDataSource3" runat="server" ConnectionString="<%$ ConnectionStrings:ConnectionString %>" SelectCommand="SELECT [intStoreID], [strStoreName] FROM [TStores]"></asp:SqlDataSource>
+                    <br />
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="Location" CssClass="text-danger" ErrorMessage="Store Location is required." />
                 </div>
             </div>
@@ -90,9 +93,12 @@
             </div>
 
              <div class="form-group">
-                <asp:Label runat="server" AssociatedControlID="AssociateTitle" CssClass="col-md-2 control-label">Employee Number:</asp:Label>
+                <asp:Label runat="server" AssociatedControlID="AssociateTitle" CssClass="col-md-2 control-label">Associate Title:</asp:Label>
                 <div class="col-md-10">
-                    <asp:TextBox runat="server" ID="AssociateTitle" CssClass="form-control" />
+                    <asp:DropDownList ID="AssociateTitle" runat="server" DataSourceID="SqlDataSource2" DataTextField="strAssociateTitle" DataValueField="intAssociateTitleID">
+                    </asp:DropDownList>
+                    <asp:SqlDataSource ID="SqlDataSource2" runat="server" ConnectionString="<%$ ConnectionStrings:ConnectionString %>" SelectCommand="SELECT * FROM [TAssociateTitles]"></asp:SqlDataSource>
+                    <br />
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="AssociateTitle"
                         CssClass="text-danger" ErrorMessage="Associate Title is required." />
                 </div>
@@ -100,14 +106,6 @@
         </asp:Panel>
         <br />
          <asp:Panel ID="Panel3" GroupingText=" Contact Information" BorderWidth="2" runat="server">
-        <div class="form-group">
-            <asp:Label runat="server" AssociatedControlID="ContactInfo" CssClass="col-md-2 control-label">Store Location:</asp:Label>
-            <div class="col-md-10">
-                <asp:TextBox runat="server" ID="ContactInfo" CssClass="form-control" />
-                <asp:RequiredFieldValidator runat="server" ControlToValidate="ContactInfo" CssClass="text-danger" ErrorMessage="Contact Information is required." />
-            </div>
-        </div>
-
          <div class="form-group">
             <asp:Label runat="server" AssociatedControlID="PhoneNumber" CssClass="col-md-2 control-label">Phone Number:</asp:Label>
             <div class="col-md-10">
@@ -173,5 +171,7 @@
             </div>
         </div>
     </div>
+    <asp:Label ID="Label1" runat="server" Text=""></asp:Label>
+    <asp:SqlDataSource ID="SqlDataSource1" runat="server" ConnectionString="<%$ ConnectionStrings:ConnectionString %>" SelectCommand="SELECT * FROM [TAssociates]"></asp:SqlDataSource>
 </asp:Content>
 
