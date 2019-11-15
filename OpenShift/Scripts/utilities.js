@@ -64,67 +64,10 @@ export const Event = {
         }
     },
 
-    // Registers "touch" as a custom event that's fired on an element 
-    // that was targetted by a "touchstart", then a "touchend"
-    registerTouchEvent: function () {
-
-
-        Object.defineProperty(HTMLElement.prototype, "ontouch", {
-            set: function ontouch(handler) {
-
-                if (!("_touchEvent" in this)) {
-                    this._touchEvent = {
-                        ontouch: null,
-                        listeners: []
-                    };
-                }
-
-                if (this._touchEvent.ontouch == null && this._touchEvent.listeners.length == 0) {
-
-                    this.addEventListener("touchstart", (event) => {
-                        console.log("TOUCH START:", event);
-                        Event.pointerDownElement = event.target;
-                    }, true);
-
-                    this.addEventListener("touchend", (event) => {
-                        console.log("TOUCH END:", event);
-                        if (event.target == Event.pointerDownElement) {
-                            //event.target.dispatchEvent(... );
-                            console.log("TOUCH EVENT");
-                        }
-
-                        Event.pointerDownElement = null;
-                    }, true);
-
-                    this.addEventListener("touchcancel", (event) => {
-                        console.log("TOUCH CANCEL:", event);
-                        if (event.target == Event.pointerDownElement) {
-                            //event.target.dispatchEvent(... );
-                            console.log("TOUCH EVENT");
-                        }
-
-                        Event.pointerDownElement = null;
-                    }, true);
-                }
-
-                if (this._touchEvent.ontouch == null) {
-                    this._touchEvent.ontouch = handler;
-                }
-
-            }
-        });
-
-    },
-
     // Wrapper function for mouse/touch events
     // NOTE: This function does not account for multi-touching
     PointerHandler: function (callback, doDefault = false) {
         return (event) => {
-
-            if (doDefault == false) {
-                event.stopPropagation();
-                event.preventDefault();
-            }
 
             // Reassign the event object to the appropriate event (either the touch or the original mouse event)
             if ("changedTouches" in event && event.changedTouches.length > 0) {
@@ -134,6 +77,18 @@ export const Event = {
                 event.pageY = event.changedTouches[0].pageY;
                 event.screenX = event.changedTouches[0].screenX;
                 event.screenY = event.changedTouches[0].screenY;
+
+                if (doDefault == false) {
+                    event.stopPropagation();
+                    // Don't prevent default on mobile, to allow scrolling
+                    //event.preventDefault();
+                }
+            } else {
+
+                if (doDefault == false) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
             }
 
             callback(event);
