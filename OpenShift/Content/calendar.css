@@ -255,10 +255,10 @@
     }
 
     .calendar .month-day-list .time-period-wrapper.focused .time-period-inner {
-        position: absolute;
+        position: fixed;
         left: 0px;
+        bottom: 20px;
         font-size: 30px;
-        margin-top: -60px;
         margin-left: 15px;
         margin-right: 15px;
         width: calc(100% - 30px);
