@@ -11,7 +11,7 @@
     }
 
     .calendar .time-period-template-card {
-        position: fixed;
+        position: sticky;
         left: 15px;
         right: 15px;
         max-width: 800px;
@@ -53,6 +53,7 @@
     grid-row-gap: 1px;
     background-color: rgb(204, 204, 204);
     border: 1px solid rgb(204, 204, 204);
+    margin-bottom: 15px;
 }
 
 .calendar .month-day-list,

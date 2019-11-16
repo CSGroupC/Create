@@ -197,7 +197,7 @@ export class AvailabilityCalendar extends Calendar {
 
         // Insert right after the calendar header
         cardBody.appendChild(this.timePeriodTemplate);
-        this.element.prepend(card);
+        this.element.append(card);
 
         let monthDayElements = this.element.getElementsByClassName("month-day");
         for (let element of monthDayElements) {
