@@ -194,11 +194,13 @@ export function TimePeriodWrapper(calendar) {
 
     handler = new Event.PointerHandler((event) => {
 
-        if (calendar.focusedTimePeriod != null) calendar.focusedTimePeriod.classList.remove("focused");
-        calendar.focusedTimePeriod = timePeriodWrapper;
-        timePeriodWrapper.classList.add("focused");
-        timePeriodWrapper.prepend(calendar.mobileOverlay);
-        calendar.mobileOverlay.classList.remove("hidden");
+        if (timePeriodWrapper.classList.contains("time-period-template") == false) {
+            if (calendar.focusedTimePeriod != null) calendar.focusedTimePeriod.classList.remove("focused");
+            calendar.focusedTimePeriod = timePeriodWrapper;
+            timePeriodWrapper.classList.add("focused");
+            timePeriodWrapper.prepend(calendar.mobileOverlay);
+            calendar.mobileOverlay.classList.remove("hidden");
+        }
 
     });
 
