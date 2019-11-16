@@ -189,7 +189,7 @@ export class AvailabilityCalendar extends Calendar {
         super(dayStartTime, dayEndTime, minutesPerColumn);
 
 
-        let card = new CustomElement(`<div class="card"><div class="card-header h3">New Availability Period</div><div class="card-body"></div></div>`);
+        let card = new CustomElement(`<div class="card time-period-template-card"><div class="card-body"></div></div>`);
         let cardBody = card.getElementsByClassName("card-body")[0];
 
         this.timePeriodTemplate = new TimePeriodWrapper(this);
@@ -197,8 +197,7 @@ export class AvailabilityCalendar extends Calendar {
 
         // Insert right after the calendar header
         cardBody.appendChild(this.timePeriodTemplate);
-        this.element.prepend(card);
-        //this.element.prepend(new CustomElement(`<div class="h1">Time Period</div>`));
+        this.element.append(card);
 
         let monthDayElements = this.element.getElementsByClassName("month-day");
         for (let element of monthDayElements) {

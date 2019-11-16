@@ -22,7 +22,7 @@
         let workingHoursEnd = PLACEHOLDER;
 
         let container = document.getElementById( "availability-calendar" );
-        let calendar = new AvailabilityCalendar( "17:00", "24:00", 5 );
+        let calendar = new AvailabilityCalendar( "17:00", "24:00", 15 );
         calendar.appendTo( container );
     </script>
 </asp:Content>
