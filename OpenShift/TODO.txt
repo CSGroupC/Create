@@ -8,10 +8,7 @@ TODO:
 
 BACK->FRONT DATA:
 
-Availability.aspx:
-
-1. The start of the current user's business' working hours
-2. The end of the current user's business' working hours
+Availability.aspx (See comments in file)
 
 FRONT->BACK DATA:
 
