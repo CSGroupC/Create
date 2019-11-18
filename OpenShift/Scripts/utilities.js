@@ -67,14 +67,15 @@ export const Event = {
     // Wrapper function for mouse/touch events
     // NOTE: This function does not account for multi-touching
     PointerHandler: function (callback, doDefault = false) {
+
         return (event) => {
 
             // Reassign the event object to the appropriate event (either the touch or the original mouse event)
             if ("changedTouches" in event && event.changedTouches.length > 0) {
                 event.clientX = event.changedTouches[0].clientX;
                 event.clientY = event.changedTouches[0].clientY;
-                event.pageX = event.changedTouches[0].pageX;
-                event.pageY = event.changedTouches[0].pageY;
+                if (!("pageX" in event)) event.pageX = event.changedTouches[0].pageX;
+                if (!("pageY" in event)) event.pageY = event.changedTouches[0].pageY;
                 event.screenX = event.changedTouches[0].screenX;
                 event.screenY = event.changedTouches[0].screenY;
 

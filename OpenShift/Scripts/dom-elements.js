@@ -214,7 +214,7 @@ export function TimePeriodWrapper(calendar) {
 
     handler = new Event.PointerHandler((event) => {
         calendar.timePeriodResizal = new TimePeriodResizal(calendar, timePeriod, event);
-    });
+    }, false);
 
     left.ontouchstart = handler;
     left.onmousedown = handler;

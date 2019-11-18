@@ -16,9 +16,16 @@
         const PLACEHOLDER = 0;
 
         // DATA (BACK->FRONT):
-        // 1. The start of the current user's business' working hours
+        // 1. The current user's ID
+        let userId = PLACEHOLDER;
+        // 2. The current user's access token
+        let accessToken = PLACEHOLDER;
+        // 3. An array/object/map of the current user's availabilities
+        //    This should include each availability's day, start time, and end time
+        let availabilities = PLACEHOLDER;
+        // 4. The start of the current user's business' working hours
         let workingHoursStart = PLACEHOLDER;
-        // 2. The end of the current user's business' working hours
+        // 5. The end of the current user's business' working hours
         let workingHoursEnd = PLACEHOLDER;
 
         let container = document.getElementById( "availability-calendar" );
