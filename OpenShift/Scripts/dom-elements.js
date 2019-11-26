@@ -110,6 +110,7 @@ class TimePeriodMovement {
             newStart -= boundaryOffset;
         }
 
+        console.log(this.element.parentElement);
         let timeElement = this.element.parentElement.getElementsByClassName("time-start")[0];
         timeElement.innerHTML = this.calendar.columnToTime(newStart - 1);
 
@@ -130,25 +131,38 @@ export function CustomElement(html) {
     return template.content.firstChild;
 }
 
-export function TimePeriodWrapper(calendar) {
+export function TimePeriod(calendar, timeBuffer = { start: null, end: null }, associate = null) {
 
-    let startTime = formatTime(calendar.dayStartTime);
-    let endTime = formatTime(calendar.dayEndTime);
+    let time = { start: timeBuffer.start, end: timeBuffer.end };
+    if (time.start != null && time.end == null) throw "Error: you must provide a start AND end time (or neither) to create a TimePeriod.";
+
     let columnStart = 1;
     let columnEnd = calendar.columnsPerDay + 1;
 
-    // If there's a time period template
-    if (calendar.timePeriodTemplate != null) {
-        startTime = calendar.timePeriodTemplate.getElementsByClassName("time-start")[0].innerHTML;
-        endTime = calendar.timePeriodTemplate.getElementsByClassName("time-end")[0].innerHTML;
-        columnStart = calendar.timePeriodTemplate.getElementsByClassName("time-period")[0].style.gridColumnStart;
-        columnEnd = calendar.timePeriodTemplate.getElementsByClassName("time-period")[0].style.gridColumnEnd;
+    if (time.start == null && time.end == null) {
+        // If there's no time period template
+        if (calendar.timePeriodTemplate == null) {
+            time.start = formatTime(calendar.dayStartTime);
+            time.end = formatTime(calendar.dayEndTime);
+        } else {
+            columnStart = calendar.timePeriodTemplate.getElementsByClassName("time-period-bar")[0].style.gridColumnStart;
+            columnEnd = calendar.timePeriodTemplate.getElementsByClassName("time-period-bar")[0].style.gridColumnEnd;
+            time.start = calendar.timePeriodTemplate.getElementsByClassName("time-start")[0].innerHTML;
+            time.end = calendar.timePeriodTemplate.getElementsByClassName("time-end")[0].innerHTML;
+        }
+    } else {
+        columnStart = calendar.timeToColumns(time.start);
+        columnEnd = calendar.timeToColumns(time.end);
+        time.start = formatTime(time.start);
+        time.end = formatTime(time.end);
     }
+
 
     // NOTE: Must use inline CSS for the grid-column property in order for resizing to work
     // NOTE: Must use appendChild instead of innerHTML in order for the time periods to retain their click handlers 
-    let timePeriodWrapper = new CustomElement(`
-    <div class="time-period-wrapper">
+    // NOTE: The order of the time period bars matters
+    let timePeriod = new CustomElement(`
+    <div class="time-period">
         <div class="time-period-inner" style="grid-template-columns: repeat( ${calendar.columnsPerDay}, 1fr );">
             <div class="time-period-heading">
 
@@ -157,7 +171,7 @@ export function TimePeriodWrapper(calendar) {
                 </span>
 
                 <span class="time-period-time">
-                    <span class="time-start">${startTime}</span> - <span class="time-end">${endTime}</span>
+                    <span class="time-start">${time.start}</span> - <span class="time-end">${time.end}</span>
                 </span>
 
                 <span class="time-period-delete">
@@ -165,7 +179,11 @@ export function TimePeriodWrapper(calendar) {
                 </span>
 
             </div>
-            <div class="time-period bg-success text-light" style="grid-column: ${columnStart} / ${columnEnd};">
+            <div class="time-period-bar availability-bar text-light" style="grid-column: ${columnStart} / ${columnEnd};">
+                <i class="fas fa-grip-lines-vertical left-handle"></i>
+                <i class="fas fa-grip-lines-vertical right-handle"></i>
+            </div>
+            <div class="time-period-bar scheduling-bar text-light" style="grid-column: ${columnStart} / ${columnEnd};">
                 <i class="fas fa-grip-lines-vertical left-handle"></i>
                 <i class="fas fa-grip-lines-vertical right-handle"></i>
             </div>
@@ -173,48 +191,64 @@ export function TimePeriodWrapper(calendar) {
     </div>
     `);
 
-    let left = timePeriodWrapper.getElementsByClassName("left-handle")[0];
-    let right = timePeriodWrapper.getElementsByClassName("right-handle")[0];
-    let timePeriod = timePeriodWrapper.getElementsByClassName("time-period")[0];
-    let heading = timePeriodWrapper.getElementsByClassName("time-period-heading")[0];
-    let copyButton = timePeriodWrapper.getElementsByClassName("time-period-copy")[0];
-    let deleteButton = timePeriodWrapper.getElementsByClassName("time-period-delete")[0];
+    let left = timePeriod.getElementsByClassName("left-handle")[0];
+    let right = timePeriod.getElementsByClassName("right-handle")[0];
+    let schedulingBar = timePeriod.getElementsByClassName("scheduling-bar")[0];
+    let availabilityBar = timePeriod.getElementsByClassName("availability-bar")[0];
+    let heading = timePeriod.getElementsByClassName("time-period-heading")[0];
+    let copyButton = timePeriod.getElementsByClassName("time-period-copy")[0];
+    let deleteButton = timePeriod.getElementsByClassName("time-period-delete")[0];
+
+    if (associate != null) {
+        schedulingBar.style.backgroundColor = associate.color;
+        availabilityBar.style.backgroundColor = associate.color;
+    } else if (Object.keys(calendar.associates).length > 0) {
+        let id = Object.keys(calendar.associates)[0];
+        schedulingBar.style.backgroundColor = calendar.associates[id].color;
+        availabilityBar.style.backgroundColor = calendar.associates[id].color;
+    }
 
     let handler = new Event.PointerHandler((event) => {
 
         // If the time is visible   
         if (getComputedStyle(heading).display != "none") {
-            calendar.timePeriodMovement = new TimePeriodMovement(calendar, timePeriod, event);
+            calendar.timePeriodMovement = new TimePeriodMovement(calendar, availabilityBar, event);
         }
     });
 
-    timePeriod.ontouchstart = handler;
-    timePeriod.onmousedown = handler;
+    availabilityBar.ontouchstart = handler;
+    availabilityBar.onmousedown = handler;
+
+    handler = new Event.PointerHandler((event) => {
+
+        if (timePeriod.classList.contains("time-period-template") == false) {
+            if (calendar.focusedTimePeriod != null) calendar.focusedTimePeriod.classList.remove("focused");
+            calendar.focusedTimePeriod = timePeriod;
+            timePeriod.classList.add("focused");
+            timePeriod.prepend(calendar.mobileOverlay);
+            calendar.mobileOverlay.classList.remove("hidden");
+        }
+    });
+
+    availabilityBar.onclick = handler;
 
 
     handler = new Event.PointerHandler((event) => {
 
-        if (timePeriodWrapper.classList.contains("time-period-template") == false) {
-            if (calendar.focusedTimePeriod != null) calendar.focusedTimePeriod.classList.remove("focused");
-            calendar.focusedTimePeriod = timePeriodWrapper;
-            timePeriodWrapper.classList.add("focused");
-            timePeriodWrapper.prepend(calendar.mobileOverlay);
-            calendar.mobileOverlay.classList.remove("hidden");
-        }
-
+        calendar.toggleScheduled(schedulingBar, associate);
     });
 
-    timePeriod.onclick = handler;
+    schedulingBar.onclick = handler;
 
     // To prevent adding a new time period when clicking this time period
     // NOTE: onclick will be simulated on mobile browsers
-    timePeriodWrapper.onclick = (event) => {
+    timePeriod.onclick = (event) => {
         event.stopPropagation();
     }
 
     handler = new Event.PointerHandler((event) => {
-        calendar.timePeriodResizal = new TimePeriodResizal(calendar, timePeriod, event);
-    }, false);
+        calendar.timePeriodResizal = new TimePeriodResizal(calendar, availabilityBar, event);
+    });
 
     left.ontouchstart = handler;
     left.onmousedown = handler;
@@ -223,21 +257,21 @@ export function TimePeriodWrapper(calendar) {
     right.onmousedown = handler;
 
     handler = new Event.PointerHandler((event) => {
-        let resizal = new TimePeriodResizal(calendar, calendar.timePeriodTemplate.getElementsByClassName("time-period")[0]);
-        resizal.setColumn(timePeriod.style.gridColumnStart, "Start");
-        resizal.setColumn(timePeriod.style.gridColumnEnd, "End");
+        let resizal = new TimePeriodResizal(calendar, calendar.timePeriodTemplate.getElementsByClassName("time-period-bar")[0]);
+        resizal.setColumn(availabilityBar.style.gridColumnStart, "Start");
+        resizal.setColumn(availabilityBar.style.gridColumnEnd, "End");
     });
 
     // NOTE: onclick will be simulated on mobile browsers
     copyButton.onclick = handler;
 
     handler = new Event.PointerHandler((event) => {
-        timePeriodWrapper.parentElement.removeChild(timePeriodWrapper);
+        // TODO: fetch
+        timePeriod.parentElement.removeChild(timePeriod);
     });
 
     // NOTE: onclick will be simulated on mobile browsers
     deleteButton.onclick = handler;
 
-    return timePeriodWrapper;
+    return timePeriod;
 }
-

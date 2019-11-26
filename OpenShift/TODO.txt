@@ -9,10 +9,15 @@ TODO:
 BACK->FRONT DATA:
 
 Availability.aspx (See comments in file)
+Scheduling.aspx (See comments in file)
 
 FRONT->BACK DATA:
 
 1. (CREATE) new availability time period for the current user
 2. (UPDATE) availability time period for the current user
 3. (DELETE) availability time period for the current user
-4. lily test
+
+4. (CREATE) new shift given the details 
+5. (DELETE) shift given the shift ID
+
+GENERAL:

@@ -3,16 +3,41 @@ export const MONTH_NAMES = ["January", "February", "March", "April", "May", "Jun
     "July", "August", "September", "October", "November", "December"
 ];
 
-// Returns format HH:MM
-export function formatTime(time) {
+// Source: https://stackoverflow.com/questions/3426404/create-a-hexadecimal-colour-based-on-a-string-with-javascript
+// This converts a given string to a color (hexidecimal format) that's unique to that string
+export function stringToColor(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    var color = "#";
+    for (var i = 0; i < 3; i++) {
+        var value = (hash >> (i * 8)) & 0xFF;
+        color += ("00" + value.toString(16)).substr(-2);
+    }
+    return color;
+}
+
+// Expects Date object
+// Returns format "HH:MM"
+export function formatTime(datetime) {
     let coefficient = 1000 * 60 * 1;
-    let timeBuffer = new Date(Math.ceil(time.getTime() / coefficient) * coefficient);
+    let timeBuffer = new Date(Math.ceil(datetime.getTime() / coefficient) * coefficient);
     let hours = timeBuffer.getHours();
 
-    if (time.getHours() == 23 && hours == 0)
+    if (datetime.getHours() == 23 && hours == 0)
         hours = 24;
 
     return hours + ":" + timeBuffer.getMinutes().toString().padStart(2, "0");
+}
+
+// Expected format: "YYYY-MM-DD HH:MM:SS"
+export function stringToDate(string) {
+    let buffer = string.split(" ");
+    let dateParts = buffer[0].split("-");
+    let timeParts = buffer[1].split(":");
+
+    return new Date(dateParts[0], dateParts[1], dateParts[2], timeParts[0], timeParts[1], timeParts[2]);
 }
 
 export function getDateFromQueryString() {
